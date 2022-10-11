@@ -4,6 +4,8 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { BookService } from '../../services/book.service';
 import { CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA } from '@angular/core';
 import { Book } from '../../models/book.model';
+import { MatDialog } from '@angular/material/dialog';
+import { of } from 'rxjs';
 
 const listBook: Book[] = [
     {
@@ -29,6 +31,39 @@ const listBook: Book[] = [
     }
 ];
 
+/*
+public onClearBooks(): void {
+    if (this.listCartBook?.length > 0) {
+      const dialogRef = this._dialog.open(ConfirmDialogComponent, {
+        maxWidth: '400px',
+        data: {
+            title: '¿Estás seguro?',
+            message: 'Desea eliminar todos los productos del carrito?',
+        }
+      });
+  
+      dialogRef.afterClosed().subscribe((dialogResult: boolean) => {
+        if (dialogResult) {
+          this._clearListCartBook();
+        }
+      });
+
+    } else {
+       console.log("No books available");
+    }
+  }
+
+*/
+// la siguiente const intentará rteplicar el funcionamiento instancia al matDialog
+// simula lo que queremos de nuyestro servicio
+const MatDialogMock = {
+    open() {
+        return {
+            afterClosed: () => of(true)//devuelve un observable
+        };
+    }
+};
+
 
 describe('Cart component', () => {
 
@@ -36,27 +71,28 @@ describe('Cart component', () => {
     let fixture: ComponentFixture<CartComponent>;
     let service: BookService;
 
-    beforeEach( () => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                HttpClientTestingModule
+                HttpClientTestingModule,
             ],
             declarations: [
                 CartComponent
             ],
             providers: [
-                BookService
+                BookService,
+                { provide: MatDialog, useValue: MatDialogMock },
             ],
             schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
         }).compileComponents();
     });
 
-    beforeEach( () => {
+    beforeEach(() => {
         fixture = TestBed.createComponent(CartComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
-        service = fixture.debugElement.injector.get(BookService);
-        spyOn(service, 'getBooksFromCart').and.callFake( () => listBook);
+        service = TestBed.inject(BookService);
+        spyOn(service, 'getBooksFromCart').and.callFake(() => listBook);
     });
 
     it('should create', () => {
@@ -80,11 +116,11 @@ describe('Cart component', () => {
             amount: 2
         };
 
-        const spy1 = spyOn(service, 'updateAmountBook').and.callFake( ()=> null);
-        const spy2 = spyOn(component, 'getTotalPrice').and.callFake( ()=> null);
+        const spy1 = spyOn(service, 'updateAmountBook').and.callFake(() => null);
+        const spy2 = spyOn(component, 'getTotalPrice').and.callFake(() => null);
 
         expect(book.amount).toBe(2);
-        
+
         component.onInputNumberChange(action, book);
 
         expect(book.amount === 3).toBeTrue();
@@ -92,8 +128,8 @@ describe('Cart component', () => {
         expect(spy1).toHaveBeenCalled();
         expect(spy2).toHaveBeenCalled();
 
-    });    
-    
+    });
+
 
     it('onInputNumberChange decrements correctly', () => {
         const action = 'minus';
@@ -107,9 +143,9 @@ describe('Cart component', () => {
 
         expect(book.amount).toBe(3);
 
-        const spy1 = spyOn(service, 'updateAmountBook').and.callFake( ()=> null);
-        const spy2 = spyOn(component, 'getTotalPrice').and.callFake( ()=> null);
-        
+        const spy1 = spyOn(service, 'updateAmountBook').and.callFake(() => null);
+        const spy2 = spyOn(component, 'getTotalPrice').and.callFake(() => null);
+
         component.onInputNumberChange(action, book);
 
         expect(book.amount).toBe(2);
@@ -121,7 +157,7 @@ describe('Cart component', () => {
 
     it('onClearBooks works correctly', () => {
         const spy1 = spyOn((component as any), '_clearListCartBook').and.callThrough();
-        const spy2 = spyOn(service, 'removeBooksFromCart').and.callFake( () => null);
+        const spy2 = spyOn(service, 'removeBooksFromCart').and.callFake(() => null);
         component.listCartBook = listBook;
         component.onClearBooks();
         expect(component.listCartBook.length).toBe(0);
@@ -130,7 +166,7 @@ describe('Cart component', () => {
     });
 
     it('_clearListCartBook works correctly', () => {
-        const spy1 = spyOn(service, 'removeBooksFromCart').and.callFake( () => null);
+        const spy1 = spyOn(service, 'removeBooksFromCart').and.callFake(() => null);
         component.listCartBook = listBook;
         component["_clearListCartBook"]();
 
